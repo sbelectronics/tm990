@@ -1,5 +1,7 @@
 # U42 is low byte, U44 is high byte
 
+OBJ2BIN=../../python/obj2bin.py
+
 all: copyin build/multi-high.rom
 
 build/multi.rom: build/monitor.rom build/basic.rom
@@ -25,12 +27,13 @@ build/monitor.rom: build/seq.bin
 
 build/basic.rom: build/seq.bin
 	cp build/seq.bin build/basic.rom
-	python3 ./listload.py
-	dd if=build/listload.bin of=build/basic.rom seek=0 bs=1 conv=notrunc
+	$(OBJ2BIN) < build/basic.obj > build/basic.bin
+	dd if=build/basic.bin of=build/basic.rom seek=0 bs=1 conv=notrunc
 
 copyin:
 	mkdir -p build
 	cp ../tm990-401-3/tibug*.bin build/
+	cp '../basic/TM990_101 EPROM Data 0000 - 3FFF.obj' build/basic.obj
 
 clean:
 	rm -f build/*.rom build/*.bin build/*.hex
