@@ -38,7 +38,10 @@ for line in lines:
 
     addr = thisAddr
 
-    out.append(val & 0xFF)
-    out.append(val >> 8)
+    low = val & 0xFF
+    high = val >> 8
+
+    out.append(low)
+    out.append(high)
 
 open("build/listload.bin","wb").write(out)

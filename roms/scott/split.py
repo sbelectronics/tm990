@@ -2,12 +2,12 @@ import sys
 
 interleaved = sys.stdin.buffer.read()
 
-even = bytearray()
-odd = bytearray()
+low = bytearray()
+high = bytearray()
 for i in range(0, int(len(interleaved)/2)):
-    even.append(interleaved[i*2])
-    odd.append(interleaved[i*2+1])
+    low.append(interleaved[i*2])
+    high.append(interleaved[i*2+1])
 
-open(sys.argv[1], "wb" ).write(even)
-open(sys.argv[2], "wb" ).write(odd)
+open(sys.argv[1], "wb" ).write(low)
+open(sys.argv[2], "wb" ).write(high)
 
