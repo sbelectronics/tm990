@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 # Convert TM990 OBJ file to BIN
 # Scott Baker, https://www.smbaker.com/
 #
