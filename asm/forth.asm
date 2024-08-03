@@ -5,6 +5,12 @@
 * This code contains a bare minimum of comments; more comments are included
 * in the original listing.
 *
+* Modified by Stuart Conner for TM990
+* Modified by Scott Baker to fix issues with burning to ROM
+*    Put vocabulary in RAM
+*    Eliminated RAM scan and used staticly defined ZHI
+*    Eliminated self-modifying code of HI, LIMIT, and FORLNK
+*
 ***********************************************************************************
 *
 * For a specific 9900 system, the following changes need to be made:
@@ -17,6 +23,7 @@
 *                     (start + 4) for a warm start which preserves the user 
 *                     dictionary after a program crash (having said that, a warm
 *                     start seems to crash the system anyway).
+*   -- ZHI equate   - set to highest RAM address
 *   -- DISKH equate - address of disk handler interface. Linked to from a BLWP on
 *                     listing page 57. System seems to work OK if no disk system
 *                     is present as long a no disk calls are made. Changed code to
@@ -51,6 +58,7 @@
 
 DUPLEX  EQU >22
 ZRAM    EQU >8000           BEGINNING OF RAM.
+ZHI     EQU >DFFF           END OF RAM. MAKE SURE BIG ENOUGH FOR DICT AND BUFFERS
 ZROM    EQU >2000           BEGINNING OF FORTH ROM (ACTUALLY RAM IN MY TM990 SYSTEM).
 *                           APPROX 5.9KB REQUIRED FOR ROM CODE.
 DISKH   EQU >F804           DISK HANDLER INTERFACE (NOT PRESENT ON MY TM990 SYSTEM).
@@ -116,13 +124,15 @@ GHLD    BSS 2
 MAINWS  BSS 32
 DBUFF   BSS 12
 
+FORLNK  BSS 2               SMBAKER RAM space to hold vocabulary
+FORVOC  BSS 2
+
 NSCR    EQU 2               DISK BUFFERS FOR SCREENS - WAS 16
 ZBUFF   BSS 128+4*8*NSCR    ONE 'NSCR' REQUIRES 1,056 BYTES RAM.
 ZLO     EQU ZBUFF
 
 *** LISTING PAGE 3 ***
 
-ZHI     EQU $
 ENDRAM  EQU ZHI
 
         AORG ZROM
@@ -151,38 +161,14 @@ XIPC    DATA COLD+2
 XIPW    DATA ABORT
 XVCLNK  DATA FORLNK
 XVLINK  DATA VLINK
+XVMARK  DATA >81A0
 
 MAIN1   LIMI 0
         LWPI MAINWS
         MOV @XIPC,ZIP
-        MOV @XVLINK,@FORLNK+2
 
-****
-*FROM THE START OF THE BUFFER, CHECK EVERY 132 BYTES THAT RAM EXISTS AT THAT ADDRESS.
-****
-
-        LI ZTEMP1,ZBUFF
-
-SEARCH  AI ZTEMP1,128+4
-
-        MOV @LIT,@LIT       NEED TO ACCESS A MEMORY ADDRESS WHERE RAM DEFINATELY EXISTS
-*                           BEFORE ACCESSING A MEMORY ADDRESS WHERE RAM MIGHT NOT
-*                           EXIST. OTHERWISE THE MEMORY EXPANSION BOARD CAN RETURN THE
-*                           SAME VALUE WRITTEN EVEN THOUGH THERE IS NO RAM AT THAT
-*                           ADDRESS.
-        MOV *ZTEMP1,ZTEMP2
-        INV *ZTEMP1
-        MOV @LIT,@LIT       SEE COMMENT ABOVE.
-        C *ZTEMP1,ZTEMP2
-
-*** LISTING PAGE 4 ***
-
-        JNE SEARCH
-
-        AI ZTEMP1,-132
-        MOV ZTEMP1,@ENDROM
-        MOV ZTEMP1,@HI+2
-        MOV ZTEMP1,@LIMIT+2
+        MOV @XVMARK, @FORLNK       SMBAKER: setup vocabulary in RAM
+        MOV @XVLINK, @FORVOC
 
         JMP START
 
@@ -1559,8 +1545,14 @@ DOVOC   DATA TWOP,CONT,STORE,SEMIS
         TEXT 'FORT'
         BYTE 'H'+>80
         DATA VOCAB-14
-FORTH   DATA DODOES,DOVOC
-FORLNK  DATA >81A0,VLINK,0
+FORTH   DATA DOCOL,LIT,FORVOC,CONT,STORE,SEMIS
+
+*         BYTE >C5
+*         TEXT 'FORT'
+*         BYTE 'H'+>80
+*         DATA VOCAB-14
+* FORTH   DATA DODOES,DOVOC
+* FORLNK  DATA >81A0,VLINK,0
 
         BYTE >8B
         TEXT 'DEFINITION'
@@ -1605,8 +1597,8 @@ TITLE   BYTE >1B,>5B,>32,>4A  VT100 ESCAPE CODE TO ERASE SCREEN.
         EVEN
 MSIZE   EQU $-TITLE
         DATA FORTH,DEFIN
-        DATA HERE, HERE, HERE, LIT, >2, ALLOT, LATEST           SMBAKER: FIX VOCAB IN ROM
-        DATA SWAP, STORE, CURR, STORE, CONT, STORE              ...        
+*        DATA HERE, HERE, HERE, LIT, >2, ALLOT, LATEST           SMBAKER: FIX VOCAB IN ROM
+*        DATA SWAP, STORE, CURR, STORE, CONT, STORE              ...        
         DATA QUIT
 
         BYTE >84
