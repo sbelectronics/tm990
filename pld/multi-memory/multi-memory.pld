@@ -1,0 +1,55 @@
+Name multi-memory;
+Partno G22V10#2;
+Revision;
+Date 09/1/2023;
+Designer Scott Baker;
+Company ;
+Location ;
+Assembly TM990 RAM/ROM board;
+Device G22V10;
+
+/* Inputs: */
+Pin 1  = !RESET;
+Pin 2  = MSRAM1;
+Pin 3  = MSRAM2;
+Pin 4  = MSROM1;
+Pin 5  = MSROM2;
+Pin 6  = OPT1;
+Pin 7  = OPT2;
+Pin 8  = OPT3;
+Pin 9  = !IOSEL;
+Pin 10 = !WE;
+Pin 11 = !MEMEN;
+Pin 13 = DBIN;
+
+/* Outputs:  */
+Pin 23 = !RAMRD;
+Pin 22 = !RAMWR;
+Pin 21 = !ROMRD;
+Pin 20 = !ROMWR;
+Pin 19 = !BEN;
+Pin 18 = BDIR;
+Pin 17 = !IORD;
+Pin 16 = !IOWR;
+Pin 15 = RESETO;
+Pin 14 = NC4;
+
+ROMCS = (MSROM1 # MSROM2);
+RAMCS = (MSRAM1 # MSRAM2);
+
+READ = (MEMEN & DBIN);
+WRITE = (MEMEN & WE);
+
+RAMRD = RAMCS & (!ROMCS) & READ;
+RAMWR = RAMCS & WRITE;
+
+ROMRD = ROMCS & READ;
+ROMWR = 'b'0;
+
+IORD = IOSEL & READ;
+IOWR = IOSEL & WRITE;
+
+BEN = (ROMCS # RAMCS # IOSEL) & MEMEN;
+BDIR = !DBIN;
+
+RESETO = RESET;
