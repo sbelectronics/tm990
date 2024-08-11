@@ -131,6 +131,9 @@ NSCR    EQU 2               DISK BUFFERS FOR SCREENS - WAS 16
 ZBUFF   BSS 128+4*8*NSCR    ONE 'NSCR' REQUIRES 1,056 BYTES RAM.
 ZLO     EQU ZBUFF
 
+
+ENDSAV  EQU $               LAST ADDRESS TO SAVE
+
 *** LISTING PAGE 3 ***
 
 ENDRAM  EQU ZHI
@@ -156,29 +159,29 @@ XFENCE  DATA VEND
 XGDP    DATA LOWRAM
 XGVLNK  DATA FORLNK
 
-XNEXT   DATA NEXT
-XIPC    DATA COLD+2
-XIPW    DATA ABORT
-XVCLNK  DATA FORLNK
-XVLINK  DATA VLINK
+XNEXT   DATA NEXT                  Initial Next pointer
+XIPC    DATA COLD+2                Initial instruction pointer for COLD start
+XIPW    DATA ABORT+2               Initial instruction pointer for WARM start
+XVCLNK  DATA FORLNK                Initial pointer to vocabulary marker
+XVLINK  DATA VLINK                 Last word in built-in vocabulary
 XVMARK  DATA >81A0
 
-MAIN1   LIMI 0
+MAIN1   LIMI 0                     Cold start entry point
         LWPI MAINWS
-        MOV @XIPC,ZIP
+        MOV @XIPC,ZIP              Load Initial instruction pointer
 
         MOV @XVMARK, @FORLNK       SMBAKER: setup vocabulary in RAM
         MOV @XVLINK, @FORVOC
 
         JMP START
 
-MAIN2   LIMI 0
+MAIN2   LIMI 0                     Warm start entry point
         LWPI MAINWS
-        MOV @XIPW,ZIP
+        MOV @XIPW,ZIP              Load Initial instruction pointer
 
-START   MOV @XSP,ZSP
-        MOV @XR,ZR
-        MOV @XNEXT,ZNEXT
+START   MOV @XSP,ZSP               Load Initial data stack pointer
+        MOV @XR,ZR                 Load Initial return stack pointer
+        MOV @XNEXT,ZNEXT           Load Initial Next pointer
         CLR @DUPLEX
 
 NEXT    MOV *ZIP+,ZW
@@ -2146,13 +2149,78 @@ TRIAD   DATA DOCOL,LIT,ZFF,EMIT,THREE,DDIV,THREE
 TRI1    DATA CR,I,LIST,LOOP,TRI1-$,CR
         DATA LIT,15,MESSAG,CR,SEMIS
 
-VLINK   BYTE >85
+        BYTE >85
         TEXT 'VLIS'         CHANGED COMMAND NAME FROM 'HELP' TO 'VLIST'.
         BYTE 'T'+>80
         DATA TRIAD-8
 HELP    DATA DOCOL,CONT,AT,AT
 HELP1   DATA DUP,IDDOT,PFA,LFA,AT,SPACE
 HELP2   DATA DUP,ZEQU,ZBRAN,HELP1-$,DROP,SEMIS
+
+*       Disk extensions for Stuart's IDE driver
+
+IDEDR   EQU >17CE        BLWP vector for DIR command in IDE code.
+IDESV   EQU >137E        BLWP vector for SAVE command in IDE code.
+IDELD   EQU >1568        BLWP vector for LOAD command in IDE code.
+IDEDL   EQU >169E        BLWP vector for DELETE command in IDE code.
+CBASSA  EQU >F076        Save/load start address passed in to IDE code.
+CBASEA  EQU >F078        Save end address passed in to IDE code. Load end address passed back by IDE code.
+FILETYP EQU >F07A        File type passed in to IDE code. Set to >FFFF to specify a BASIC program file.
+
+        BYTE >85
+        TEXT 'ISAV'
+        BYTE 'E'+>80
+        DATA HELP-8
+ISAVE   DATA $+2
+        MOV @PSTART,@CBASSA     Set start address
+        MOV @PEND,@CBASEA       Set end address
+        MOV @PFILTYP,@FILETYP   Set IDE save routine file type to >FFFD to indicate a FORTH program file.
+        BLWP @IDESV             BLWP vector for SAVE command in IDE code.
+        B *ZNEXT
+PSTART  DATA ZRAM
+PEND    DATA ENDSAV
+PFILTYP DATA >FFFD
+
+        BYTE >85
+        TEXT 'ILOA'
+        BYTE 'D'+>80
+        DATA ISAVE-8
+ILOAD   DATA $+2
+        MOV @PSTART,@CBASSA     Set start address
+        BLWP @IDELD             BLWP vector for LOAD command in IDE code.
+        B @MAIN2                External routine returns here. Do warm start.
+
+        BYTE >84
+        TEXT 'IDIR'
+        BYTE >A0
+        DATA ILOAD-8
+IDIR    DATA $+2
+        BLWP @IDEDR              BLWP vector for LOAD command in IDE code.
+        B *ZNEXT                 External routine returns here. Do warm start.
+
+        BYTE >86
+        TEXT 'DELETE'
+        BYTE  >A0
+        DATA IDIR-8
+IDELETE DATA $+2
+        BLWP @IDEDL              BLWP vector for DELETE command in IDE code.
+        B *ZNEXT                 External routine returns here. Do warm start.
+
+        BYTE >85
+        TEXT 'RESE'
+        BYTE 'T'+>80
+        DATA IDELETE-10
+IRESET  DATA $+2
+        BLWP @>0000              BLWP vector to reset vector
+
+VLINK   BYTE >84
+        TEXT 'WARM'
+        BYTE >A0
+        DATA IRESET-8
+IWARM   DATA $+2
+        B @MAIN2
+
+*       End of disk extensions
 
 VEND    EQU $
 
