@@ -773,6 +773,7 @@ VDPSTRL MOVB *R10, R0    Look for end of String. Get byte at R10.
         JEQ ENDSTR       If zero, we done
         INC R10          Point to next byte
         JMP VDPSTRL      Keep looking
+*        DATA >2FC0       Breakpoint??
 ENDSTR  JMP VDPDSRC      R9=start, R10=end. Print the string.
 
 VDPDSRC LI R4,SENDAD     Reference SENDAD routine.
@@ -1149,7 +1150,7 @@ MOD4    DEC R3           Count bit.
 C2000   DATA >2000
 B20     EQU C2000
 B00     BYTE 0
-        BYTE 0           Realign
+B47     BYTE >47
 C7F     DATA >007F
 B7F     EQU C7F+1        Cursor character.
 S$SM    BYTE >C0,>80+R1  Reload VDP R1.
@@ -1406,6 +1407,7 @@ CPYPTRN MOV *R1+,*R2+    Copy patterns.
         CI R2,USERCS     Done?
         JL CPYPTRN       No, loop.
 
+        MOVB @B47,@FBCOL  Set foreground and background colors
         B @STXT          This will RTWP at the end
 
 START   LWPI WPR1        Load workspace pointer. 
@@ -1416,7 +1418,7 @@ START   LWPI WPR1        Load workspace pointer.
 
 MSGPTR  DATA MSG
 MSG     TEXT 'SCOTT WAS HERE'
-        BYTE CR,LF
+        BYTE >0D,>0A
         TEXT 'SECOND LINE'
         BYTE 0
 
