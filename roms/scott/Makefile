@@ -4,13 +4,12 @@ OBJ2BIN=../../python/obj2bin.py
 
 all: copyin build/multi-high.rom
 
-build/multi.rom: build/monitor.rom build/monitor-orig.rom build/basic.rom build/forth.rom build/cortexbasic.rom
-	dd if=build/monitor-orig.rom of=build/multi-tmp.rom
-	dd if=build/forth.rom of=build/multi-tmp.rom oflag=append conv=notrunc
-	dd if=build/basic.rom of=build/multi-tmp.rom oflag=append conv=notrunc
-	dd if=build/cortexbasic.rom of=build/multi-tmp.rom oflag=append conv=notrunc	
-	cp build/multi-tmp.rom build/multi.rom
-	#python3 ./bitswap.py < build/multi-tmp.rom > build/multi.rom
+build/multi.rom: build/monitor.rom build/monitor-orig.rom build/basic.rom build/forth.rom build/cortexbasic.rom build/vdptest.rom
+	dd if=build/monitor-orig.rom of=build/multi.rom                                        # Bank 0
+	dd if=build/forth.rom of=build/multi.rom oflag=append conv=notrunc                     # Bank 1
+	dd if=build/basic.rom of=build/multi.rom oflag=append conv=notrunc                     # Bank 2
+	dd if=build/cortexbasic.rom of=build/multi.rom oflag=append conv=notrunc               # Bank 3
+	dd if=build/vdptest.rom of=build/multi.rom oflag=append conv=notrunc	               # Bank 4
 
 build/multi-high.rom: build/multi.rom
 	cat build/multi.rom | python3 ./split.py build/multi-low.rom build/multi-high.rom
@@ -47,6 +46,11 @@ build/cortexbasic.rom: build/monitor.rom
 	cp build/monitor.rom build/cortexbasic.rom
 	$(OBJ2BIN) -S 2000 < ../../asm/cortexbasic.obj > build/cortexbasic.bin
 	dd if=build/cortexbasic.bin of=build/cortexbasic.rom seek=8192 bs=1 conv=notrunc
+
+build/vdptest.rom: build/monitor.rom
+	cp build/monitor.rom build/vdptest.rom
+	$(OBJ2BIN) -S 2000 < ../../asm/vdp.obj > build/vdptest.bin
+	dd if=build/vdptest.bin of=build/vdptest.rom seek=8192 bs=1 conv=notrunc
 
 copyin:
 	mkdir -p build
