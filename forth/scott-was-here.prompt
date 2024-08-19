@@ -1,0 +1,98 @@
+Create a fig-forth program to speak the phrase "scott was here" using a SP0256A-AL2 speech synthesizer that outputs phonemes on next memory address EFB4 and reads that status of the ALD as bit 1 at hex address EFA4. Use the Forth word HEX to put forth into hex mode. Unmute the amplifier by writing a 1 to EFB8. Use the following table of hexadecimal numbers to SP0256A-AL2 phonemes:
+00 PA1
+01 PA2
+02 PA3
+03 PA4
+04 PA5
+05 /OY/
+06 /AY/
+07 /EH/
+08 /KK3/
+09 /PP/
+0A /JH/
+0B /NN1/
+0C /IH/
+0D /TT2/
+0E /RR1/
+0F /AX/
+10 /MM/
+11 /TT1/
+12 /DH1/
+13 /IY/
+14 /EY/
+15 /DD1/
+16 /UW1/
+17 /A)/
+18 /AA/
+19 /YY2/
+1A /AE/
+1B /HH1/
+1C /BB1/
+1D /TH/
+1E /UH/
+1F /UW2/
+20 /AW/
+21 /DD2/
+22 /GG3/
+23 /VV/
+24 /GG1/
+25 /SH/
+26 /ZH/
+27 /RR2/
+28 /FF/
+29 /KK2/
+2A /KK1/
+2B /ZZ/
+2C /NG/
+2D /LL/
+2E /WW/
+2F /XR/
+30 /WH/
+31 /YY1/
+32 /CH/
+33 /ER1/
+34 /ER2/
+35 /OW/
+36 /DH2/
+37 /SS/
+38 /NN2/
+39 /HH2/
+3A /OR/
+3B /AR/
+3C /YR/
+3D /GG2/
+3E /EL/
+3F /BB2/
+
+---
+
+use fig-forth comments
+
+---
+
+use bit 1 for ald not bit 2
+
+---
+
+you said "was" twice
+
+---
+
+explain how you translated 'was"
+
+---
+
+why did you use /ax/ and /ss/ instead of /uh/ and /zz/ ?
+
+---
+
+convert this to tms9900 assembly
+
+---
+
+do not use colon after the label
+
+---
+
+set the program to start at 2000 hex
+
