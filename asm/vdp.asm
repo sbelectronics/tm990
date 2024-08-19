@@ -56,10 +56,10 @@ WPVDP   DATA >0000,>0000,>0000,>0000,>0000  (BSS 16*2)  VDP vowrkspace
 
 BRAMCLR EQU $            Bottom of RAM to start clearing
 
-STRPTR  DATA 0
-
 CCNT    DATA 0           Column counter.
 CURFLG  DATA 0           Cursor flag, 0=on, -1=off.
+
+CTMP    DATA 0           Temporary character
 
 *I/O local storage area.
 
@@ -514,9 +514,11 @@ USERCS  BYTE >00,>00,>00,>00,>00,>00        >A9
 
 VDPINIV DATA WPVDP,VDPINIC
 
-VDPDSRV DATA WPVDP,VDPDSRC
+VDPDSRV DATA WPVDP,VDPDSRC              Callee R9,R10 = start addr and end addr of str
 
-VDPSTRV DATA WPVDP,VDPSTRC
+VDPSTRV DATA WPVDP,VDPSTRC              Caller R9 = start addr of null term str
+
+VDPCHRV DATA WPVDP,VDPCHRC              Caller R9 = character to print in high byte
 
 *******************************************************************************
 *******************************************************************************
@@ -767,7 +769,12 @@ GREXIT  ANDI R8,>1FF8    Kill pixel and write bits.
 *VDP output routines.
 *
 
-VDPSTRC MOV @STRPTR, R9  R9 = start of string
+VDPCHRC MOV @18(R13), @CTMP     Load caller's R9 into CTMP
+        LI R9, CTMP
+        LI R10, CTMP+1
+        JMP VDPDSRC
+
+VDPSTRC MOV @18(R13), R9 R9 = start of string, from caller's R9
         MOV R9, R10      R10 = end of string
 VDPSTRL MOVB *R10, R0    Look for end of String. Get byte at R10.
         JEQ ENDSTR       If zero, we done
@@ -1412,14 +1419,19 @@ CPYPTRN MOV *R1+,*R2+    Copy patterns.
 
 START   LWPI WPR1        Load workspace pointer. 
         BLWP @VDPINIV
-        MOV @MSGPTR, @STRPTR
+        LI R9, MSG
         BLWP @VDPSTRV
+        LI R9, 'S'
+        BLWP @VDPCHRV   Print S
+        LI R9, 'B'
+        BLWP @VDPCHRV   ... and B
+
         DATA >2FC0       Breakpoint??
 
-MSGPTR  DATA MSG
 MSG     TEXT 'SCOTT WAS HERE'
         BYTE >0D,>0A
         TEXT 'SECOND LINE'
+        BYTE >0D,>0A
         BYTE 0
 
         END
